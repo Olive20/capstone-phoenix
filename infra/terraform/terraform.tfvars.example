@@ -1,0 +1,2 @@
+# Your public IPv4 in CIDR notation. Find it with: curl -4 -s ifconfig.me
+admin_cidr = "203.0.113.42/32"
