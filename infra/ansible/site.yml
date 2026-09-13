@@ -1,0 +1,35 @@
+---
+- name: Harden all cluster nodes
+  hosts: k3s_cluster
+  become: yes
+  roles:
+    - base
+
+- name: Install k3s control plane
+  hosts: k3s_server
+  become: yes
+  roles:
+    - k3s-server
+
+- name: Join k3s agents to the cluster
+  hosts: k3s_agents
+  become: yes
+  roles:
+    - k3s-agent
+
+- name: Fetch kubeconfig to control machine
+  hosts: k3s_server
+  become: yes
+  tasks:
+    - name: Read kubeconfig from server
+      ansible.builtin.slurp:
+        src: /etc/rancher/k3s/k3s.yaml
+      register: kubeconfig_raw
+
+    - name: Write kubeconfig locally with public IP
+      ansible.builtin.copy:
+        content: "{{ kubeconfig_raw.content | b64decode | replace('127.0.0.1', ansible_host) }}"
+        dest: "{{ playbook_dir }}/kubeconfig"
+        mode: '0600'
+      delegate_to: localhost
+      become: no
